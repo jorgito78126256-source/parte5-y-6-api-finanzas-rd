@@ -8,8 +8,8 @@ const SECRET_KEY = "finanzasrd2026";
 app.use(express.json());
 
 let clientes = [
-    { id: "1", nombre: "Juan Pérez", correo: "juan@correo.com", telefono: "8095551234" },
-    { id: "2", nombre: "María Rodríguez", correo: "maria@correo.com", telefono: "8295555678" }
+    { id: "1", nombre: "juan perez", correo: "juan@correo.com", telefono: "8095551234" },
+    { id: "2", nombre: "maria rodriguez", correo: "maria@correo.com", telefono: "8295555678" }
 ];
 
 // LOGIN
@@ -19,14 +19,14 @@ app.post('/login', (req, res) => {
     if (usuario === "admin" && password === "1234") {
 
         const token = jwt.sign(
-            { usuario: usuario },
+            { usuario },
             SECRET_KEY,
             { expiresIn: "15m" }
         );
 
         return res.json({
             mensaje: "Inicio de sesión exitoso",
-            token: token
+            token
         });
     }
 
@@ -38,20 +38,20 @@ app.post('/login', (req, res) => {
 // Middleware para verificar el token
 function verificarToken(req, res, next) {
 
-    const encabezado = req.headers.authorization;
+    const authHeader = req.headers.authorization;
 
-    if (!encabezado) {
+    if (!authHeader) {
         return res.status(401).json({
-            mensaje: "Token requerido"
+            mensaje: "Token no proporcionado"
         });
     }
 
-    const token = encabezado.split(" ")[1];
+    const token = authHeader.split(" ")[1];
 
     jwt.verify(token, SECRET_KEY, (err, usuario) => {
 
         if (err) {
-            return res.status(401).json({
+            return res.status(403).json({
                 mensaje: "Token inválido o expirado"
             });
         }
@@ -61,15 +61,14 @@ function verificarToken(req, res, next) {
     });
 }
 
-// Obtener todos los clientes
+// Rutas protegidas
 app.get('/clientes', verificarToken, (req, res) => {
     res.json(clientes);
 });
 
-// Obtener cliente por ID
 app.get('/clientes/:id', verificarToken, (req, res) => {
-
-    const cliente = clientes.find(c => c.id === req.params.id);
+    const idBuscado = req.params.id;
+    const cliente = clientes.find(c => c.id === idBuscado);
 
     if (!cliente) {
         return res.status(404).json({
@@ -80,14 +79,13 @@ app.get('/clientes/:id', verificarToken, (req, res) => {
     res.json(cliente);
 });
 
-// Registrar cliente
 app.post('/clientes', verificarToken, (req, res) => {
 
     const { nombre, correo, telefono } = req.body;
 
     if (!nombre || !correo || !telefono) {
         return res.status(400).json({
-            mensaje: "Todos los campos son obligatorios"
+            mensaje: "Todos los campos son obligatorios."
         });
     }
 
@@ -104,9 +102,11 @@ app.post('/clientes', verificarToken, (req, res) => {
         mensaje: "Cliente registrado exitosamente",
         cliente: nuevoCliente
     });
-
 });
 
 app.listen(PORT, () => {
     console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
+
+
+
